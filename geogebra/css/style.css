@@ -1,0 +1,21 @@
+.icon-geogebra-new-ggb {
+    background-image: url("../img/new-ggb.svg");
+}
+
+/* geogebra-inline */
+body.geogebra-inline {
+    overscroll-behavior-y: none;
+    overflow: hidden;
+}
+body.geogebra-inline #app-navigation,
+body.geogebra-inline .searchbox,
+body.geogebra-inline #app-content #controls,
+body.geogebra-inline #filestable {
+    display: none;
+}
+body.geogebra-inline #app-navigation-toggle {
+    display: none !important;
+}
+body.geogebra-inline #content #app-content {
+    margin-left: 0;
+}

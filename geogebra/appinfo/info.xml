@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<info xmlns:xsi= "http://www.w3.org/2001/XMLSchema-instance"
+	  xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
+	<id>geogebra</id>
+	<name>Geogebra</name>
+	<summary>Geogebra</summary>
+	<description><![CDATA[This application enables Nextcloud users to open, save and edit geogebra files in the web browser.]]></description>
+	<version>1.0.0</version>
+	<licence>agpl</licence>
+	<author mail="594352301@qq.com">Yilun Wang</author>
+	<namespace>Geogebra</namespace>
+	<category>math</category>
+	<website>https://www.geogebra.org</website>
+	<bugs>https://github.com/hvwyl/geogebra-nextcloud/issues</bugs>
+	<repository type="git">https://github.com/hvwyl/geogebra-nextcloud.git</repository>
+	<dependencies>
+		<nextcloud min-version="24" max-version="24"/>
+	</dependencies>
+	<repair-steps>
+		<install>
+			<step>OCA\Geogebra\Migration\InstallStep</step>
+		</install>
+		<uninstall>
+			<step>OCA\Geogebra\Migration\UninstallStep</step>
+		</uninstall>
+	</repair-steps>
+</info>

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title></title>
+	<style>
+	html,body {
+		height: 100%;
+		width: 100%;
+		padding: 0;
+		margin: 0;
+	}
+	#loading {
+		position: absolute;
+		height: 30px;
+		top: 0;right: 0;
+		bottom: 0;left: 0;
+		margin: auto;
+		z-index: 9999;
+	}
+	#loading > .spinner {
+		position: absolute;
+		height: 50px;
+		width: 50px;
+		top: -28px;
+		left: 0;right: 0;
+		margin: auto;
+		border: #6557D2 3px solid;
+		border-radius: 50%;
+		border-left-color: transparent;
+		animation: a 1s infinite linear;
+	}
+	@keyframes a {
+		0% {
+			transform:rotate(0deg)
+		}
+		to {
+			transform:rotate(1turn)
+		}
+	}
+	#loading > .text {
+		position: absolute;
+		bottom: -28px;
+		left: 0;
+		right: 0;
+		margin: auto;
+		text-align: center;
+		color: #6557D2;
+		font-size: 18px;
+	}
+	#mask {
+		position: absolute;
+		background-color: rgba(0, 0, 0, .1);
+		top: 0;right: 0;
+		bottom: 0;left: 0;
+		margin: auto;
+		z-index: 9998;
+	}
+	</style>
+</head>
+<body>
+<div id="loading">
+	<div class="spinner"></div>
+	<div class="text">Loading</div>
+</div>
+<div id="ggw"></div>
+<script>
+function $G(s){
+	return document.querySelector(s);
+}
+
+function getUrlParam(name) {
+    var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+    var r = window.location.search.substr(1).match(reg);
+    if (r != null)
+        return decodeURIComponent(r[2]);
+    return null;
+}
+var t=window.parent.t;
+var parent$=window.parent.$;
+var OC=window.parent.OC;
+var OCA=window.parent.OCA;
+
+//l10n
+$G("#loading>div.text").innerHTML=t(OCA.Geogebra.AppName,"Loading");
+
+//初始化Geogebra
+function insertScript(codebase){
+	var app = document.createElement("script");		
+	app.setAttribute("src",codebase+"web3d/js/webfont.js");
+	document.head.appendChild(app);
+	app = document.createElement("script");
+	app.setAttribute("src",codebase+"web3d/web3d.nocache.js");
+	document.head.appendChild(app);
+}
+$G("#ggw").className="geogebraweb";
+$G("#ggw").setAttribute("data-param-appname","classic");
+$G("#ggw").setAttribute("data-param-app",true);
+$G("#ggw").setAttribute("data-param-useBrowserForJS",true);
+$G("#ggw").setAttribute("data-param-enableFileFeatures",false);
+$G("#ggw").setAttribute("data-param-language",OC.getLanguage());
+
+//只需要初始化一次内容
+var loaded=false;
+var content="";
+
+//全局变量
+var path=getUrlParam("filePath");
+var mtime=0;
+
+function ggbOnInit(){
+	if(!loaded){
+		loaded=true;
+		ggbApplet.setBase64(content);
+		$G("#loading").remove();
+		//保存按钮
+		var saveBtn=document.createElement("DIV");
+		saveBtn.className="button button-up";
+		saveBtn.innerHTML="<img src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSJub25lIiBkPSJNMCAwaDI0djI0SDB6Ii8+PHBhdGggZmlsbD0iIzY2NiIgZD0iTTE3IDNINWEyIDIgMCAwIDAtMiAydjE0YTIgMiAwIDAgMCAyIDJoMTRjMS4xIDAgMi0uOSAyLTJWN2wtNC00em0tNSAxNmMtMS42NiAwLTMtMS4zNC0zLTNzMS4zNC0zIDMtMyAzIDEuMzQgMyAzLTEuMzQgMy0zIDN6bTMtMTBINVY1aDEwdjR6Ii8+PC9zdmc+' class='gwt-Image' style='width: 32px;'>";
+		saveBtn.onclick=function(){
+			var loading=document.createElement("DIV");
+			loading.id="loading";
+			loading.innerHTML="<div class='spinner'></div><div class='text'>"+t(OCA.Geogebra.AppName,"Waiting")+"</div>";
+			document.body.appendChild(loading);
+			var mask=document.createElement("DIV");
+			mask.id="mask";
+			document.body.appendChild(mask);
+			(function(){
+				if(token==null){
+					return parent$.ajax({
+						type: "PUT",
+						url: OC.generateUrl("/apps/"+OCA.Geogebra.AppName+"/ajax/savefile"),
+						data: {
+							path: path,
+							filecontents: ggbApplet.getBase64,
+							mtime: mtime
+						}
+					});
+				}else{
+					return parent$.ajax({
+						type: "PUT",
+						url: OC.generateUrl("/apps/"+OCA.Geogebra.AppName+"/ajax/share/savefile"),
+						data: {
+							token: token,
+							path: path,
+							filecontents: ggbApplet.getBase64,
+							mtime: mtime
+						}
+					});
+				}
+			})().done(function(data){
+				mtime=data.mtime;
+				loading.remove();
+				mask.remove();
+			}).fail(function(err){
+				$G("#loading>div.spinner").remove();
+				$G("#loading>div.text").style.top="0";
+				$G("#loading>div.text").style.bottom="0";
+				$G("#loading>div.text").innerHTML="<span style='background:#fff;padding:5px;border:#6557D2 1px solid;display:inline-block'>"+err.responseJSON.message+"</span>";
+				document.body.addEventListener("click",function(){
+					loading.remove();
+					mask.remove();
+				});
+			});
+		};
+		//关闭按钮
+		var closeBtn=document.createElement("DIV");
+		closeBtn.className="button button-up";
+		closeBtn.innerHTML="<img src='data:image/svg+xml;base64,DQo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiB2aWV3Qm94PSIwIDAgMjQgMjQiPjxwYXRoIGZpbGw9IiM2NjYiIGQ9Ik0xOSA2LjQxTDE3LjU5IDUgMTIgMTAuNTkgNi40MSA1IDUgNi40MSAxMC41OSAxMiA1IDE3LjU5IDYuNDEgMTkgMTIgMTMuNDEgMTcuNTkgMTkgMTkgMTcuNTkgMTMuNDEgMTJ6Ii8+PHBhdGggZmlsbD0ibm9uZSIgZD0iTTAgMGgyNHYyNEgweiIvPjwvc3ZnPg==' class='gwt-Image' style='width: 32px;'>";
+		closeBtn.onclick=OCA.Geogebra.CloseEditor;
+		//向dom添加按钮
+		(function(){
+			var panel=$G(".rightButtonPanel");
+			panel.insertBefore(saveBtn,panel.lastChild);
+			//判断是否为单页共享文件
+			if( !(parent$("#isPublic").val() && parent$("#mimetype").val()=="application/ggb") ){
+				panel.insertBefore(closeBtn,panel.lastChild);
+			};
+		})();
+	};
+}
+
+var token=getUrlParam("t");
+(function(){
+	var loadfileurl;
+	if(token==null){
+		loadfileurl = OC.generateUrl("/apps/"+OCA.Geogebra.AppName+"/ajax/loadfile?path={path}",{path: path});
+	}else{
+		loadfileurl = OC.generateUrl("/apps/"+OCA.Geogebra.AppName+"/ajax/share/loadfile/"+token+"?path={path}",{path: path});
+	};
+	parent$.get(loadfileurl).done(function(data){
+		content=data.filecontents;
+		mtime=data.mtime;
+		insertScript("./");
+	}).error(function(err){
+		$G("#loading>div.text").innerHTML=err.responseJSON.message;
+	});
+})();
+</script>
+</body>
+</html>
+
